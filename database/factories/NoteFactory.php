@@ -21,7 +21,7 @@ class NoteFactory extends Factory
             'description' => $this->faker->text(1000),
             'writing_date' => $this->faker->date(),
             'noteable_id' => $this->faker->randomElement([1, 2, 3, 4]),
-            'noteable_type' => $this->faker->randomElement(['App/Models/Author', 'App/Models/Book']),
+            'noteable_type' => $this->faker->randomElement(['App\Models\Author', 'App\Models\Book']),
             'user_id' => User::all()->random()->id,
         ];
     }
