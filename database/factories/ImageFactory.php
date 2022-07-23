@@ -17,7 +17,7 @@ class ImageFactory extends Factory
     public function definition()
     {
         return [
-            'url' => 'image/' . $this->faker->image('storage/app/image', 640,480, null, false),
+            'url' => 'images/' . $this->faker->image('storage/app/public/images', 640,480, null, false),
             'imageable_id' => $this->faker->randomElement([1, 2, 3, 4]),
             'imageable_type' => $this->faker->randomElement(['App\Models\Author', 'App\Models\Book']),
         ];

@@ -11,12 +11,12 @@ class Book extends Model
     protected $table = 'books';
     protected $fillable = ['title', 'subtitle', 'language', 'page', 'published', 'description', 'genre_id', 'publisher_id'];
 
-    public function publisher(){
-        return $this->belongsTo(Publisher::class);
-    }
-
     public function genre(){
         return $this->belongsTo(Genre::class);
+    }
+
+    public function publisher(){
+        return $this->belongsTo(Publisher::class);
     }
 
     public function authors(){
@@ -31,7 +31,7 @@ class Book extends Model
         return $this->morphMany(Note::class, 'noteable');
     }
 
-    public function ratings(){
-        return $this->morphToMany(Rating::class, 'ratingable');
+    public function users(){
+        return $this->morphToMany(User::class, 'userable');
     }
 }

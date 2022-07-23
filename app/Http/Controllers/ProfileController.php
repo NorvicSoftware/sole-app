@@ -17,8 +17,12 @@ class ProfileController extends Controller
     public function index($author_id)
     {
 //        $profiles = Profile::with(['author'])->where('author_id', '=', $author_id)->first();
-        $profiles = Author::with(['profile'])->where('id', '=', $author_id)->first();
-        return response()->json(['author' => $profiles, 'image' => Storage::url($profiles->image['url'])]);
+//        $profiles = Author::with(['profile'])->where('id', '=', $author_id)->first();
+//        $image = null;
+//        if($profiles->image){
+//            $image = Storage::url($profiles->image['url']);
+//        }
+//        return response()->json(['author' => $profiles, 'image' => $image]);
     }
 
     /**
@@ -29,6 +33,12 @@ class ProfileController extends Controller
      */
     public function store(Request $request)
     {
+        $validated = $request->validate([
+            'career' => 'required|max:75',
+            'website' => 'max:75',
+            'email' => 'email|max:75',
+            'author.id' => 'required|integer|exists:authors,id',
+        ]);
         try {
             $profile = new Profile();
             $profile->career = $request->career;
@@ -51,8 +61,8 @@ class ProfileController extends Controller
      */
     public function show($id)
     {
-        $profiles = Profile::with(['author'])->where('id', '=', $id)->get();
-        return response()->json($profiles);
+//        $profiles = Profile::with(['author'])->where('id', '=', $id)->get();
+//        return response()->json($profiles);
     }
 
     /**
@@ -64,6 +74,12 @@ class ProfileController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $validated = $request->validate([
+            'career' => 'required|max:75',
+            'website' => 'max:75',
+            'email' => 'email|max:75',
+            'author.id' => 'required|integer|exists:authors,id',
+        ]);
         try {
             $profile = Profile::findOrFail($id);
             $profile->career = $request->career;
@@ -86,12 +102,12 @@ class ProfileController extends Controller
      */
     public function destroy($id)
     {
-        try{
-            $profile = Profile::findOrFail($id);
-            $profile->delete();
-            return response()->json(['status' => true, 'message' => 'El perfil del autor fue eliminado exitosamente' ]);
-        } catch (\Exception $exc){
-            return response()->json(['status' => false, 'message' => 'Error al eliminar el registro']);
-        }
+//        try{
+//            $profile = Profile::findOrFail($id);
+//            $profile->delete();
+//            return response()->json(['status' => true, 'message' => 'El perfil del autor fue eliminado exitosamente' ]);
+//        } catch (\Exception $exc){
+//            return response()->json(['status' => false, 'message' => 'Error al eliminar el registro']);
+//        }
     }
 }

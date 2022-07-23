@@ -46,7 +46,11 @@ class User extends Authenticatable
         return $this->hasMany(Note::class);
     }
 
-    public function ratings(){
-        return $this->hasMany(Rating::class);
+    public function authors(){
+        return $this->morphedByMany(Author::class, 'userable');
+    }
+
+    public function books(){
+        return $this->morphedByMany(Book::class, 'userable');
     }
 }

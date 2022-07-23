@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class BookController extends Controller
 {
@@ -15,6 +16,11 @@ class BookController extends Controller
     public function index()
     {
         $books = Book::with(['genre', 'publisher', 'authors'])->orderBy('title', 'asc')->get();
+        $count = 0;
+        foreach ($books as $book) {
+            $books[$count]->ratings = $book->ratings;
+            $count++;
+        }
         return response()->json($books);
     }
 
@@ -26,6 +32,17 @@ class BookController extends Controller
      */
     public function store(Request $request)
     {
+        $validated = $request->validate([
+            'title' => 'required|max:75|unique:books',
+            'subtitle' => 'min:3|max:250',
+            'language' => 'min:3|max:35',
+            'page' => 'integer|digits_between:2,4',
+            'published' => 'date|date_format:Y-m-d',
+            'genre.id' => 'required|integer|exists:genres,id',
+            'publisher.id' => 'required|integer|exists:publishers,id',
+            'authors' => 'required|array',
+            'authors.*.id' => 'required|integer',
+        ]);
         try {
             $book = new Book();
             $book->title = $request->title;
@@ -39,6 +56,10 @@ class BookController extends Controller
             $book->save();
             foreach ($request->authors as $author) {
                 $book->authors()->attach($author['id']);
+            }
+            $image_name = $this->loadImage($request);
+            if($image_name != ''){
+                $book->image()->create(['url' => 'images/'. $image_name]);
             }
             return response()->json(['status' => true, 'message' => 'El Libro ' . $book->title . ' fue creado exitosamente' ]);
         } catch (\Exception $exc){
@@ -54,8 +75,12 @@ class BookController extends Controller
      */
     public function show($id)
     {
-        $book = Book::with(['genre', 'publisher', 'authors'])->where('id', '=', $id)->get();
-        return response()->json($book);
+        $book = Book::with(['genre', 'publisher', 'authors'])->where('id', '=', $id)->first();
+        $image = null;
+        if($book->image){
+            $image = Storage::url($book->image['url']);
+        }
+        return response()->json(['book' => $book, 'image' => $image]);
     }
 
     /**
@@ -67,6 +92,17 @@ class BookController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $validated = $request->validate([
+            'title' => 'required|max:75|unique:books,title,' . $id,
+            'subtitle' => 'min:3|max:250',
+            'language' => 'min:3|max:35',
+            'page' => 'integer|digits_between:2,4',
+            'published' => 'date|date_format:Y-m-d',
+            'genre.id' => 'required|integer|exists:genres,id',
+            'publisher.id' => 'required|integer|exists:publishers,id',
+            'authors' => 'required|array',
+            'authors.*.id' => 'required|integer',
+        ]);
         try {
             $book = Book::findOrFail($id);
             $book->title = $request->title;
@@ -81,6 +117,10 @@ class BookController extends Controller
             $book->authors()->detach();
             foreach ($request->authors as $author) {
                 $book->authors()->attach($author['id']);
+            }
+            $image_name = $this->loadImage($request);
+            if($image_name != ''){
+                $book->image()->update(['url' => 'images/'. $image_name]);
             }
             return response()->json(['status' => true, 'message' => 'El Libro ' . $book->title . ' fue actualizado exitosamente' ]);
         } catch (\Exception $exc){
@@ -103,5 +143,16 @@ class BookController extends Controller
         } catch (\Exception $exc){
             return response()->json(['status' => false, 'message' => 'Error al eliminar el registro']);
         }
+    }
+
+    public function loadImage($request){
+        $image_name = '';
+        if($request->hasFile('image')) {
+            $destination_path = 'public/images';
+            $image = $request->file('image');
+            $image_name = time() . '_' . $image->getClientOriginalName();
+            $request->file('image')->storeAs($destination_path, $image_name);
+        }
+        return $image_name;
     }
 }

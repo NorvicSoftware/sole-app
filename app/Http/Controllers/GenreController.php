@@ -26,6 +26,9 @@ class GenreController extends Controller
      */
     public function store(Request $request)
     {
+        $validated = $request->validate([
+            'name' => 'required|max:70|unique:genres',
+        ]);
         try {
             $genre = new Genre();
             $genre->name = $request->name;
@@ -58,6 +61,9 @@ class GenreController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $validated = $request->validate([
+            'name' => 'required|max:70|unique:genres,name,' . $id,
+        ]);
         try {
             $genre = Genre::findOrFail($id);
             $genre->name = $request->name;

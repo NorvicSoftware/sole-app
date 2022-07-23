@@ -26,6 +26,12 @@ class PublisherController extends Controller
      */
     public function store(Request $request)
     {
+        $validated = $request->validate([
+            'name' => 'required|max:70|unique:publishers',
+            'country' => 'max:250',
+            'website' => 'max:75',
+            'email' => 'max:75|email',
+        ]);
         try {
             $publisher = new Publisher();
             $publisher->name = $request->name;
@@ -61,6 +67,12 @@ class PublisherController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $validated = $request->validate([
+            'name' => 'required|max:70|unique:publishers,name,' . $id,
+            'country' => 'max:250',
+            'website' => 'max:75',
+            'email' => 'max:75|email',
+        ]);
         try {
             $publisher = Publisher::findOrFail($id);
             $publisher->name = $request->name;
@@ -86,7 +98,7 @@ class PublisherController extends Controller
         try{
             $publisher = Publisher::findOrFail($id);
             $publisher->delete();
-            return response()->json(['status' => true, 'message' => 'El genero ' . $publisher->name . ' fue eliminado exitosamente' ]);
+            return response()->json(['status' => true, 'message' => 'La Editorial ' . $publisher->name . ' fue eliminado exitosamente' ]);
         } catch (\Exception $exc){
             return response()->json(['status' => false, 'message' => 'Error al eliminar el registro']);
         }

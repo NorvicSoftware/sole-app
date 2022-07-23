@@ -27,7 +27,7 @@ class Author extends Model
         return $this->morphMany(Note::class, 'noteable');
     }
 
-    public function ratings(){
-        return $this->morphToMany(Rating::class, 'ratingable');
+    public function users(){
+        return $this->morphToMany(User::class, 'userable');
     }
 }

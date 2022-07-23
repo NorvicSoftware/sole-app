@@ -19,7 +19,7 @@ class UserSeeder extends Seeder
         $user->name = 'Victor Peña';
         $user->email = 'victor@gmail.com';
         $user->password = bcrypt('admin');
-        $user->email_verified_at = '2022-03-09';
+        $user->email_verified_at = '2022-05-09';
         $user->remember_token = 'nNFhKn76Vic';
         $user->save();
     }

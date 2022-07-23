@@ -7,8 +7,11 @@ use App\Http\Controllers\PublisherController;
 use App\Http\Controllers\AuthorController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\BookController;
-use App\Http\Controllers\NoteController;
+use App\Http\Controllers\NoteBookController;
+use App\Http\Controllers\NoteAuthorController;
+use App\Http\Controllers\RatingAuthorController;
 use App\Http\Controllers\RatingController;
+use App\Http\Controllers\RatingBookController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -47,12 +50,28 @@ Route::middleware(['auth:sanctum'])->group(function (){
         Route::delete('/authors/{id}', 'destroy');
     });
     Route::controller(ProfileController::class)->group(function (){
-        Route::get('/authors/{author_id}/profiles', 'index');
         Route::post('/profiles', 'store');
-        Route::get('/profiles/{id}', 'show');
         Route::put('/profiles/{id}', 'update');
-        Route::delete('/profiles/{id}', 'destroy');
     });
+
+    Route::controller(NoteAuthorController::class)->group(function (){
+        Route::get('/authors/{id}/notes', 'index');
+        Route::post('/authors/notes', 'store');
+        Route::get('/authors/notes/{id}', 'show');
+        Route::put('/authors/notes/{id}', 'update');
+        Route::delete('/authors/notes/{id}', 'destroy');
+    });
+
+//    Route::controller(RatingController::class)->group(function (){
+//        Route::get('/ratings', 'index');
+//    });
+
+    Route::controller(RatingAuthorController::class)->group(function (){
+        Route::post('/authors/ratings', 'store');
+        Route::get('/authors/{id}/ratings', 'show');
+        Route::put('/authors/ratings/{id}', 'update');
+    });
+
 
     Route::controller(BookController::class)->group(function (){
         Route::get('/books', 'index');
@@ -62,19 +81,16 @@ Route::middleware(['auth:sanctum'])->group(function (){
         Route::delete('/books/{id}', 'destroy');
     });
 
-    Route::controller(NoteController::class)->group(function (){
+    Route::controller(NoteBookController::class)->group(function (){
         Route::get('/books/{id}/notes', 'index');
-        Route::post('/notes', 'store');
-        Route::get('/notes/{id}', 'show');
-        Route::put('/notes/{id}', 'update');
-        Route::delete('/notes/{id}', 'destroy');
+        Route::post('/books/notes', 'store');
+        Route::put('/books/notes/{id}', 'update');
+        Route::delete('/books/notes/{id}', 'destroy');
     });
 
-    Route::controller(RatingController::class)->group(function (){
-        Route::get('/ratings', 'index');
-        Route::post('/ratings', 'store');
-        Route::get('/ratings/{id}', 'show');
-        Route::put('/ratings/{id}', 'update');
-        Route::delete('/ratings/{id}', 'destroy');
+    Route::controller(RatingBookController::class)->group(function (){
+        Route::post('/books/ratings', 'store');
+        Route::get('/books/{id}/ratings', 'show');
+        Route::put('/books/ratings/{id}', 'update');
     });
 });

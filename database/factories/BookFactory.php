@@ -21,7 +21,7 @@ class BookFactory extends Factory
         return [
             'title' => $this->faker->name(),
             'subtitle' => $this->faker->text(75),
-            'language' => $this->faker->randomElement(['Español', 'Ingles', 'Portugues']),
+            'language' => $this->faker->randomElement(['Español', 'Ingles']),
             'page' => $this->faker->numberBetween(50, 1000),
             'published' => $this->faker->date(),
             'description' => $this->faker->text(1000),
