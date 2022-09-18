@@ -5,9 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Book;
 use App\Models\Note;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use PDF;
+Use App\Repositories\Exports\ExcelBookNotes;
+use App\Repositories\BookRepository;
 
 class NoteBookController extends Controller
 {
+    protected $books;
+
+    public function __construct(BookRepository $books){
+        $this->books = $books;
+    }
     /**
      * Display a listing of the resource.
      *
@@ -29,8 +38,8 @@ class NoteBookController extends Controller
     {
         $validated = $request->validate([
             'description' => 'required|min:5',
-            'writing_date' => 'date',
-            'author.id' => 'required|integer|exists:authors,id',
+            'writing_date' => 'date|date_format:Y-m-d',
+            'book.id' => 'required|integer|exists:books,id',
             'user.id' => 'required|integer|exists:users,id',
         ]);
         try {
@@ -50,7 +59,9 @@ class NoteBookController extends Controller
      */
     public function show($id)
     {
-        //
+        $note = Note::find($id);
+        $this->authorize('MyNote', $note);
+        return response()->json($note);
     }
 
     /**
@@ -65,7 +76,7 @@ class NoteBookController extends Controller
         $validated = $request->validate([
             'description' => 'required|min:5',
             'writing_date' => 'date',
-            'author.id' => 'required|integer|exists:authors,id',
+            'book.id' => 'required|integer|exists:books,id',
             'user.id' => 'required|integer|exists:users,id',
         ]);
         try {
@@ -94,5 +105,16 @@ class NoteBookController extends Controller
         } catch (\Exception $exc){
             return response()->json(['status' => false, 'message' => 'Error al eliminar el registro']);
         }
+    }
+
+    public function generatePDF($id){
+        $data = $this->books->getBookNotes($id);
+        $pdf = PDF::loadView('books.notes.pdf', $data);
+        return $pdf->stream();
+    }
+
+    public function generateExcel($id){
+        $data = $this->books->getBookNotes($id);
+        return Excel::download(new ExcelBookNotes($data), 'NotasDeLibro.xlsx');
     }
 }

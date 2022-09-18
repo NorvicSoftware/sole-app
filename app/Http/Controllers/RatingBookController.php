@@ -26,13 +26,13 @@ class RatingBookController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'author.id' => 'required|integer|exists:authors,id',
-            'rating.id' => 'required|integer|exists:ratings,id',
+            'number_star' => 'required',
+            'book.id' => 'required|integer|exists:books,id',
             'user.id' => 'required|integer|exists:users,id',
         ]);
         try {
             $book = Book::findOrFail($request->book['id']);
-            $book ->ratings()->attach($request->rating['id'], ['user_id' => $request->user['id']]);
+            $book->users()->attach($request->user['id'], ['number_star' => $request->number_star]);
             return response()->json(['status' => true, 'message' => 'La puntuación del libro ' . $book ->title .' fue creado exitosamente' ]);
         } catch (\Exception $exc){
             return response()->json(['status' => false, 'message' => 'Error al crear el registro' . $exc]);
@@ -48,7 +48,7 @@ class RatingBookController extends Controller
     public function show($id)
     {
         $book = Book::findOrFail($id);
-        return response()->json($book->ratings()->where('user_id', '=', auth()->user()->id)->get());
+        return response()->json(['book' => $book, "rating" => $book->users()->where('user_id', '=', auth()->user()->id)->select('userables.*')->get()]);
     }
 
     /**
@@ -61,14 +61,13 @@ class RatingBookController extends Controller
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'author.id' => 'required|integer|exists:authors,id',
-            'rating.id' => 'required|integer|exists:ratings,id',
+            'number_star' => 'required|integer',
+            'book.id' => 'required|integer|exists:books,id',
             'user.id' => 'required|integer|exists:users,id',
         ]);
         try {
             $book = Book::findOrFail($request->book['id']);
-            $book->ratings()->detach();
-            $book->ratings()->attach($request->rating['id'], ['user_id' => $request->user['id']]);
+            $book->users()->updateExistingPivot($request->user['id'], ['number_star' => $request->number_star]);
             return response()->json(['status' => true, 'message' => 'La puntuación del libro ' . $book->title .' fue creado exitosamente' ]);
         } catch (\Exception $exc){
             return response()->json(['status' => false, 'message' => 'Error al crear el registro' . $exc]);

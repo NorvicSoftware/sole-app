@@ -6,6 +6,10 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Event;
+Use App\Models\Author;
+Use App\Observers\AuthorObserver;
+Use App\Models\Book;
+Use App\Observers\BookObserver;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -27,6 +31,7 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        Author::observe(AuthorObserver::class);
+        Book::observe(BookObserver::class);
     }
 }

@@ -5,9 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Author;
 use App\Models\Note;
 use Illuminate\Http\Request;
+use PDF;
+use Maatwebsite\Excel\Facades\Excel;
+Use App\Repositories\Exports\ExcelNotes;
+use App\Repositories\AuthorRepository;
 
 class NoteAuthorController extends Controller
 {
+    protected $authors;
+
+    public function __construct(AuthorRepository $authors){
+        $this->authors = $authors;
+    }
     /**
      * Display a listing of the resource.
      *
@@ -51,6 +60,7 @@ class NoteAuthorController extends Controller
     public function show($id)
     {
         $note = Note::find($id);
+        $this->authorize('MyNote', $note);
         return response()->json($note);
     }
 
@@ -65,7 +75,7 @@ class NoteAuthorController extends Controller
     {
         $validated = $request->validate([
             'description' => 'required|min:5',
-            'writing_date' => 'date',
+            'writing_date' => 'date|date_format:Y-m-d',
             'author.id' => 'required|integer|exists:authors,id',
             'user.id' => 'required|integer|exists:users,id',
         ]);
@@ -95,5 +105,16 @@ class NoteAuthorController extends Controller
         } catch (\Exception $exc){
             return response()->json(['status' => false, 'message' => 'Error al eliminar el registro']);
         }
+    }
+
+    public function generatePDF($id){
+        $data = $this->authors->getAuthorNotes($id);
+        $pdf = PDF::loadView('authors.notes.pdf', $data);
+        return $pdf->stream();
+    }
+
+    public function generateExcel($id){
+        $data = $this->authors->getAuthorNotes($id);
+        return Excel::download(new ExcelNotes($data), 'NotasDeAutor.xlsx');
     }
 }

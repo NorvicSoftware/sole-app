@@ -3,8 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Book;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use App\Mail\NewBookNotification;
 
 class BookController extends Controller
 {
@@ -18,7 +22,7 @@ class BookController extends Controller
         $books = Book::with(['genre', 'publisher', 'authors'])->orderBy('title', 'asc')->get();
         $count = 0;
         foreach ($books as $book) {
-            $books[$count]->ratings = $book->ratings;
+            $books[$count]->ratings = $book->users()->select('userables.*')->get();
             $count++;
         }
         return response()->json($books);
@@ -38,11 +42,12 @@ class BookController extends Controller
             'language' => 'min:3|max:35',
             'page' => 'integer|digits_between:2,4',
             'published' => 'date|date_format:Y-m-d',
-            'genre.id' => 'required|integer|exists:genres,id',
-            'publisher.id' => 'required|integer|exists:publishers,id',
+            'genre_id' => 'required|integer|exists:genres,id',
+            'publisher_id' => 'required|integer|exists:publishers,id',
             'authors' => 'required|array',
-            'authors.*.id' => 'required|integer',
+//            'authors.*.id' => 'required|integer',
         ]);
+        DB::beginTransaction();
         try {
             $book = new Book();
             $book->title = $request->title;
@@ -51,18 +56,25 @@ class BookController extends Controller
             $book->page = $request->page;
             $book->published = $request->published;
             $book->description = $request->description;
-            $book->genre_id = $request->genre['id'];
-            $book->publisher_id = $request->publisher['id'];
+            $book->genre_id = $request->genre_id;
+            $book->publisher_id = $request->publisher_id;
             $book->save();
             foreach ($request->authors as $author) {
-                $book->authors()->attach($author['id']);
+                $book->authors()->attach($author);
             }
             $image_name = $this->loadImage($request);
             if($image_name != ''){
                 $book->image()->create(['url' => 'images/'. $image_name]);
             }
+            DB::commit();
+            $users = User::all();
+            foreach ($users as $user){
+                $registered_book = new NewBookNotification($book);
+                Mail::to($user->email)->send($registered_book);
+            }
             return response()->json(['status' => true, 'message' => 'El Libro ' . $book->title . ' fue creado exitosamente' ]);
         } catch (\Exception $exc){
+            DB::rollBack();
             return response()->json(['status' => false, 'message' => 'Error al crear el registro']);
         }
     }
@@ -98,11 +110,11 @@ class BookController extends Controller
             'language' => 'min:3|max:35',
             'page' => 'integer|digits_between:2,4',
             'published' => 'date|date_format:Y-m-d',
-            'genre.id' => 'required|integer|exists:genres,id',
-            'publisher.id' => 'required|integer|exists:publishers,id',
+            'genre_id' => 'required|integer|exists:genres,id',
+            'publisher_id' => 'required|integer|exists:publishers,id',
             'authors' => 'required|array',
-            'authors.*.id' => 'required|integer',
         ]);
+        DB::beginTransaction();
         try {
             $book = Book::findOrFail($id);
             $book->title = $request->title;
@@ -111,20 +123,27 @@ class BookController extends Controller
             $book->page = $request->page;
             $book->published = $request->published;
             $book->description = $request->description;
-            $book->genre_id = $request->genre['id'];
-            $book->publisher_id = $request->publisher['id'];
+            $book->genre_id = $request->genre_id;
+            $book->publisher_id = $request->publisher_id;
             $book->save();
             $book->authors()->detach();
             foreach ($request->authors as $author) {
-                $book->authors()->attach($author['id']);
+                $book->authors()->attach($author);
             }
             $image_name = $this->loadImage($request);
             if($image_name != ''){
-                $book->image()->update(['url' => 'images/'. $image_name]);
+                if($book->image != null){
+                    $book->image()->update(['url' => 'images/'. $image_name]);
+                }
+                else {
+                    $book->image()->create(['url' => 'images/'. $image_name]);
+                }
             }
+            DB::commit();
             return response()->json(['status' => true, 'message' => 'El Libro ' . $book->title . ' fue actualizado exitosamente' ]);
         } catch (\Exception $exc){
-            return response()->json(['status' => false, 'message' => 'Error al editar el registro']);
+            DB::rollBack();
+            return response()->json(['status' => false, 'message' => 'Error al editar el registro' . $exc]);
         }
     }
 

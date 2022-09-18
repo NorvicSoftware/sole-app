@@ -7,9 +7,15 @@ use App\Models\Image;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use App\Repositories\AuthorRepository;
 
 class AuthorController extends Controller
 {
+    protected $authors;
+
+    public function __construct(AuthorRepository $authors){
+        $this->authors = $authors;
+    }
     /**
      * Display a listing of the resource.
      *
@@ -17,13 +23,7 @@ class AuthorController extends Controller
      */
     public function index()
     {
-        $authors = Author::orderBy('full_name', 'asc')->get();
-        $count = 0;
-        foreach ($authors as $author) {
-            $authors[$count]->ratings = $author->users()->select('userables.*')->get();
-            $count++;
-        }
-        return response()->json($authors);
+        return response()->json($this->authors->getAuthorsRatings());
     }
 
     /**
@@ -40,7 +40,7 @@ class AuthorController extends Controller
             'country' => 'max:75',
             'image' => 'nullable|sometimes|image',
         ]);
-
+        DB::beginTransaction();
         try {
             $author = new Author();
             $author->full_name = $request->full_name;
@@ -51,8 +51,10 @@ class AuthorController extends Controller
             if($image_name != ''){
                 $author->image()->create(['url' => 'images/'. $image_name]);
             }
+            DB::commit();
             return response()->json(['status' => true, 'message' => 'El autor ' . $author->full_name . ' fue creado exitosamente' ]);
         } catch (\Exception $exc){
+            DB::rollBack();
             return response()->json(['status' => false, 'message' => 'Error al crear el registro']);
         }
     }
@@ -96,7 +98,12 @@ class AuthorController extends Controller
             $author->save();
             $image_name = $this->loadImage($request);
             if($image_name != ''){
-                $author->image()->update(['url' => 'images/'. $image_name]);
+                if($author->image != null){
+                    $author->image()->update(['url' => 'images/'. $image_name]);
+                }
+                else {
+                    $author->image()->create(['url' => 'images/'. $image_name]);
+                }
             }
             return response()->json(['status' => true, 'message' => 'El autor ' . $author->full_name . ' fue actualizado exitosamente' ]);
         } catch (\Exception $exc){
@@ -115,6 +122,9 @@ class AuthorController extends Controller
         try{
             $author = Author::findOrFail($id);
             $author->delete();
+            if($author->image()){
+                $author->image()->delete();
+            }
             return response()->json(['status' => true, 'message' => 'El autor ' . $author->full_name . ' fue eliminado exitosamente' ]);
         } catch (\Exception $exc){
             return response()->json(['status' => false, 'message' => 'Error al eliminar el registro']);

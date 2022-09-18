@@ -26,6 +26,7 @@ use App\Http\Controllers\RatingBookController;
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
 });
+//Route::get('/authors/{id}/notes/generateexcel', [NoteAuthorController::class, 'generateExcel']);
 
 Route::middleware(['auth:sanctum'])->group(function (){
     Route::controller(GenreController::class)->group(function (){
@@ -60,6 +61,18 @@ Route::middleware(['auth:sanctum'])->group(function (){
         Route::get('/authors/notes/{id}', 'show');
         Route::put('/authors/notes/{id}', 'update');
         Route::delete('/authors/notes/{id}', 'destroy');
+        Route::get('/authors/{id}/notes/generatepdf', 'generatePDF');
+        Route::get('/authors/{id}/notes/generateexcel', 'generateExcel');
+    });
+
+    Route::controller(NoteBookController::class)->group(function (){
+        Route::get('/books/{id}/notes', 'index');
+        Route::post('/books/notes', 'store');
+        Route::get('/books/notes/{id}', 'show');
+        Route::put('/books/notes/{id}', 'update');
+        Route::delete('/books/notes/{id}', 'destroy');
+        Route::get('/books/{id}/notes/generatepdf', 'generatePDF');
+        Route::get('/books/{id}/notes/generateexcel', 'generateExcel');
     });
 
 //    Route::controller(RatingController::class)->group(function (){
